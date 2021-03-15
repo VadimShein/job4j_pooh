@@ -1,45 +1,38 @@
 package ru.job4j.pooh;
 
-import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.LinkedBlockingQueue;
+import java.util.concurrent.ConcurrentLinkedQueue;
 
 public class TopicService implements Service {
-    private final ConcurrentHashMap<String, BlockingQueue<String>> topicMap = new ConcurrentHashMap<>();
-    private final ConcurrentHashMap<String, BlockingQueue<String>> userMap = new ConcurrentHashMap<>();
+    private final ConcurrentHashMap<String, ConcurrentLinkedQueue<String>> topicMap = new ConcurrentHashMap<>();
+    private final ConcurrentHashMap<String, ConcurrentLinkedQueue<String>> userMap = new ConcurrentHashMap<>();
 
     @Override
     public Resp process(Req req) {
-        String text = "null";
-        Resp response = null;
+        String text = null;
+        int status = 404;
 
         if (req.method().equals("POST")) {
-            if (req.mode().equals("topic")) {
-                if (!topicMap.containsKey(req.key())) {
-                    BlockingQueue<String> bq = new LinkedBlockingQueue<>();
-                    bq.add(req.message());
-                    topicMap.put(req.key(), bq);
-                } else {
-                    BlockingQueue<String> qu = new LinkedBlockingQueue<>(topicMap.get(req.key()));
-                    qu.add(req.message());
-                    topicMap.put(req.key(), qu);
-                }
-            }
-            response = new Resp(req.message(), 200);
+            topicMap.putIfAbsent(req.key(), new ConcurrentLinkedQueue<>());
+            ConcurrentLinkedQueue<String> qu = new ConcurrentLinkedQueue<>(topicMap.get(req.key()));
+            qu.add(req.message());
+            topicMap.put(req.key(), qu);
+            text = "POST: " + req.message();
+            status = 200;
         }
         if (req.method().equals("GET")) {
-            if (topicMap.containsKey(req.key())) {
-                userMap.put(req.id(), topicMap.get(req.key()));
-                BlockingQueue<String> qu = userMap.get(req.id());
-                if (qu.size() > 0) {
-                    text = qu.poll();
-                    userMap.put(req.id(), qu);
-                } else {
-                    userMap.remove(req.key());
-                }
+            ConcurrentLinkedQueue<String> qu = topicMap.getOrDefault(req.key(), new ConcurrentLinkedQueue<>());
+            userMap.putIfAbsent(req.id(), new ConcurrentLinkedQueue<>());
+            userMap.put(req.id(), qu);
+            ConcurrentLinkedQueue<String> quId = userMap.getOrDefault(req.id(), new ConcurrentLinkedQueue<>());
+            text = "GET: " + quId.poll();
+            if (quId.size() > 0) {
+                userMap.put(req.id(), quId);
+            } else {
+                userMap.remove(req.id());
             }
-            response = new Resp(text, 200);
+            status = 200;
         }
-        return response;
+        return new Resp(text, status);
     }
 }

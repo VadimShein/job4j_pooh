@@ -14,23 +14,14 @@ public class TopicService implements Service {
 
         if (req.method().equals("POST")) {
             topicMap.putIfAbsent(req.key(), new ConcurrentLinkedQueue<>());
-            ConcurrentLinkedQueue<String> qu = new ConcurrentLinkedQueue<>(topicMap.get(req.key()));
-            qu.add(req.message());
-            topicMap.put(req.key(), qu);
-            text = "POST: " + req.message();
+            topicMap.get(req.key()).add(req.message());
+            text = req.message();
             status = 200;
         }
         if (req.method().equals("GET")) {
-            ConcurrentLinkedQueue<String> qu = topicMap.getOrDefault(req.key(), new ConcurrentLinkedQueue<>());
             userMap.putIfAbsent(req.id(), new ConcurrentLinkedQueue<>());
-            userMap.put(req.id(), qu);
-            ConcurrentLinkedQueue<String> quId = userMap.getOrDefault(req.id(), new ConcurrentLinkedQueue<>());
-            text = "GET: " + quId.poll();
-            if (quId.size() > 0) {
-                userMap.put(req.id(), quId);
-            } else {
-                userMap.remove(req.id());
-            }
+            userMap.put(req.id(), topicMap.getOrDefault(req.key(), new ConcurrentLinkedQueue<>()));
+            text = userMap.getOrDefault(req.id(), new ConcurrentLinkedQueue<>()).poll();
             status = 200;
         }
         return new Resp(text, status);

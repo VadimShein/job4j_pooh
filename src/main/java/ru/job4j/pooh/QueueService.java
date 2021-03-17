@@ -13,20 +13,12 @@ public class QueueService implements Service {
 
         if (req.method().equals("POST")) {
             queueMap.putIfAbsent(req.key(), new ConcurrentLinkedQueue<>());
-            ConcurrentLinkedQueue<String> qu = new ConcurrentLinkedQueue<>(queueMap.get(req.key()));
-            qu.add(req.message());
-            queueMap.put(req.key(), qu);
-            text = "POST: " + req.message();
+            queueMap.get(req.key()).add(req.message());
+            text = req.message();
             status = 200;
         }
         if (req.method().equals("GET")) {
-            ConcurrentLinkedQueue<String> qu = queueMap.getOrDefault(req.key(), new ConcurrentLinkedQueue<>());
-            text = "GET: " + qu.poll();
-            if (qu.size() > 0) {
-                queueMap.put(req.key(), qu);
-            } else {
-                queueMap.remove(req.key());
-            }
+            text = queueMap.getOrDefault(req.key(), new ConcurrentLinkedQueue<>()).poll();
             status = 200;
         }
         return new Resp(text, status);

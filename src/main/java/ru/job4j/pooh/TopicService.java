@@ -9,21 +9,23 @@ public class TopicService implements Service {
 
     @Override
     public Resp process(Req req) {
-        String text = null;
-        int status = 404;
+        Resp result = new Resp("Bad Request", 400);
+        if (req.getMethod().equals("POST")) {
+            topicMap.putIfAbsent(req.getTopic(), new ConcurrentLinkedQueue<>());
+            topicMap.get(req.getTopic()).add(req.getMessage());
+            result = new Resp("Created", 201);
 
-        if (req.method().equals("POST")) {
-            topicMap.putIfAbsent(req.key(), new ConcurrentLinkedQueue<>());
-            topicMap.get(req.key()).add(req.message());
-            text = req.message();
-            status = 200;
         }
-        if (req.method().equals("GET")) {
-            userMap.putIfAbsent(req.id(), new ConcurrentLinkedQueue<>());
-            userMap.put(req.id(), topicMap.getOrDefault(req.key(), new ConcurrentLinkedQueue<>()));
-            text = userMap.getOrDefault(req.id(), new ConcurrentLinkedQueue<>()).poll();
-            status = 200;
+        if (req.getMethod().equals("GET")) {
+            userMap.putIfAbsent(req.getTopic(), new ConcurrentLinkedQueue<>());
+            userMap.put(req.getTopic(), topicMap.getOrDefault(req.getTopic(), new ConcurrentLinkedQueue<>()));
+            String text = userMap.getOrDefault(req.getTopic(), new ConcurrentLinkedQueue<>()).poll();
+            if (text != null) {
+                result = new Resp(text, 200);
+            } else {
+                result = new Resp("Value not found", 404);
+            }
         }
-        return new Resp(text, status);
+        return result;
     }
 }

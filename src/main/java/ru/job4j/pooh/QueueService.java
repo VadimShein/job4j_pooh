@@ -8,19 +8,21 @@ public class QueueService implements Service {
 
     @Override
     public Resp process(Req req) {
-        String text = null;
-        int status = 404;
+        Resp result = new Resp("Bad Request", 400);
+        if (req.getMethod().equals("POST")) {
+            queueMap.putIfAbsent(req.getTopic(), new ConcurrentLinkedQueue<>());
+            queueMap.get(req.getTopic()).add(req.getMessage());
+            result = new Resp("Created", 201);
 
-        if (req.method().equals("POST")) {
-            queueMap.putIfAbsent(req.key(), new ConcurrentLinkedQueue<>());
-            queueMap.get(req.key()).add(req.message());
-            text = req.message();
-            status = 200;
         }
-        if (req.method().equals("GET")) {
-            text = queueMap.getOrDefault(req.key(), new ConcurrentLinkedQueue<>()).poll();
-            status = 200;
+        if (req.getMethod().equals("GET")) {
+            String text = queueMap.getOrDefault(req.getTopic(), new ConcurrentLinkedQueue<>()).poll();
+            if (text != null) {
+                result = new Resp(text, 200);
+            } else {
+                result = new Resp("Value not found", 404);
+            }
         }
-        return new Resp(text, status);
+        return result;
     }
 }

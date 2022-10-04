@@ -22,15 +22,16 @@ public class PoohServer {
                 Socket socket = server.accept();
                 pool.execute(() -> {
                     try (OutputStream out = socket.getOutputStream();
-                    BufferedInputStream input = new BufferedInputStream(socket.getInputStream())                    ) {
+                    BufferedInputStream input = new BufferedInputStream(socket.getInputStream())) {
                         byte[] buff = new byte[1_000_000];
                         int total = input.read(buff);
                         String text = new String(Arrays.copyOfRange(buff, 0, total), StandardCharsets.UTF_8);
                         Req req = new Req(text);
-                        Resp resp = modes.get(req.mode()).process(req);
-                        System.out.println(resp.text());
-                        out.write(("HTTP/1.1 " + resp.status() + " OK\r\n").getBytes());
-                        out.write(resp.text().getBytes());
+                        Resp resp = modes.get(req.getMode()).process(req);
+                        System.out.println(resp.getText());
+                        out.write(("HTTP/1.1 " + resp.getStatus() + System.lineSeparator()
+                                + System.lineSeparator() + System.lineSeparator()).getBytes());
+                        out.write((resp.getText() + System.lineSeparator()).getBytes());
                     } catch (IOException e) {
                         e.printStackTrace();
                     }

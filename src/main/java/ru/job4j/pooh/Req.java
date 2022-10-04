@@ -1,39 +1,73 @@
 package ru.job4j.pooh;
 
+import java.util.Objects;
+
 public class Req {
-    private String text;
-    private String[] parseText;
-    private String[] parseMessageData;
-    private String[] parseData;
+    private final String method;
+    private final String mode;
+    private final String topic;
+    private final String message;
 
     public Req(String text) {
-        this.text = text;
-        this.parseText = text.split("\n");
-        this.parseMessageData = parseText[0].split(" ");
-        this.parseData = parseMessageData[1].split("/");
+        String[] lines = text.split("\n");
+        String[] data = lines[0].split(" ");
+        String[] parameters = data[1].split("/");
+        this.message = lines[lines.length - 1];
+        this.method = data[0];
+        this.mode = parameters[1];
+        this.topic = parameters[2];
     }
 
-    public String valueOf(String key) {
-        return null;
+    public Req(String method, String mode, String topic, String message) {
+        this.method = method;
+        this.mode = mode;
+        this.topic = topic;
+        this.message = message;
+
     }
 
-    public String method() {    // post/get
-        return parseMessageData[0];
+    public String getMessage() {
+        return message;
     }
 
-    public String mode() {  //queue/topic
-        return parseData[1];
+    public String getMethod() {
+        return method;
     }
 
-    public String key() {   //weather
-        return parseData[2];
+    public String getMode() {
+        return mode;
     }
 
-    public String message() {   //text
-        return parseText[7];
+    public String getTopic() {
+        return topic;
     }
 
-    public String id() {   //id
-        return parseData[3];
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) {
+            return true;
+        }
+        if (o == null || getClass() != o.getClass()) {
+            return false;
+        }
+        Req req = (Req) o;
+        return Objects.equals(method, req.method)
+                && Objects.equals(mode, req.mode)
+                && Objects.equals(topic, req.topic)
+                && Objects.equals(message, req.message);
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hash(method, mode, topic, message);
+    }
+
+    @Override
+    public String toString() {
+        return "Req{"
+                + "method='" + method + '\''
+                + ", mode='" + mode + '\''
+                + ", topic='" + topic + '\''
+                + ", message='" + message + '\'' + '}';
     }
 }

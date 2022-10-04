@@ -9,11 +9,18 @@ public class Resp {
         this.status = status;
     }
 
-    public String text() {
+    public String getText() {
         return text;
     }
 
-    public int status() {
+    public int getStatus() {
         return status;
+    }
+
+    @Override
+    public String toString() {
+        return "Resp{"
+                + "text='" + text + '\''
+                + ", status=" + status + '}';
     }
 }
